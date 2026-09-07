@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Trésorerie Chat Pitre</title>
+<meta name="application-name" content="Chat Pitre">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chat Pitre">
+<meta name="theme-color" content="#c0392b">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjgwIiBmaWxsPSIjYzAzOTJiIi8+CiAgPHRleHQgeD0iMjU2IiB5PSIzNDAiIGZvbnQtZmFtaWx5PSItYXBwbGUtc3lzdGVtLEhlbHZldGljYSxzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0MCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNQPC90ZXh0Pgo8L3N2Zz4=">
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--surface3:#30363d;
+  --border:rgba(255,255,255,0.07);--text:#e6edf3;--muted:#7d8590;
+  --accent:#f0b429;--accent-dim:rgba(240,180,41,0.12);
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;--purple:#bc8cff;
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;min-height:100vh;padding-bottom:80px}
+
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:20}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.header-title{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.header-right{display:flex;align-items:center;gap:8px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}.sync-dot.loading{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.year-tabs{display:flex;gap:6px}
+.year-tab{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.year-tab.active{background:var(--accent);border-color:var(--accent);color:#0d1117}
+
+.month-scroll{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.month-scroll::-webkit-scrollbar{display:none}
+.month-btn{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.month-btn.active{background:var(--blue);border-color:var(--blue);color:#0d1117;font-weight:700}
+.month-btn.negative{border-color:rgba(248,81,73,.3);color:var(--red)}
+.month-btn.positive{border-color:rgba(63,185,80,.25);color:var(--green)}
+
+.cards-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.card.full{grid-column:span 2}
+.card-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.card-value{font-size:20px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.card-value.green{color:var(--green)}.card-value.red{color:var(--red)}
+.card-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+.section{margin:0 16px 8px}
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:9px 0 7px;border-bottom:1px solid var(--border);margin-bottom:2px;cursor:pointer;user-select:none}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.section-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.section-total{font-size:14px;font-weight:700}
+.chevron{color:var(--muted);font-size:12px;transition:transform .2s;margin-left:8px}
+.chevron.open{transform:rotate(180deg)}
+
+.section-note{font-size:11px;color:var(--muted);padding:5px 0 3px;font-style:italic;line-height:1.5}
+
+.row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);gap:8px}
+.row:last-child{border-bottom:none}
+.row-left{flex:1;min-width:0}
+.row-label{font-size:13px;color:var(--text);line-height:1.3}
+.row-label.muted{color:var(--muted);font-size:12px}
+.row-tag{font-size:10px;margin-top:1px}
+.tag-fixed{color:var(--blue)}
+.tag-auto{color:var(--accent)}
+.tag-editable{color:var(--purple)}
+.row-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.row-amount{font-size:14px;font-weight:600;min-width:68px;text-align:right}
+.row-amount.zero{color:var(--muted);font-weight:400}
+.row-amount.suggested{color:var(--accent)}
+.has-note{width:18px;height:18px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.has-note span{color:var(--accent);font-size:10px;font-weight:700}
+.edit-btn{width:26px;height:26px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.edit-btn:active{background:var(--surface2)}
+
+/* Bandeau suggestion charges */
+.suggestion-band{background:rgba(240,180,41,0.07);border:1px solid rgba(240,180,41,0.2);border-radius:var(--radius-sm);padding:10px 12px;margin:4px 0 6px;font-size:12px;color:var(--accent);line-height:1.7}
+.suggestion-band strong{font-weight:700;display:block;margin-bottom:2px}
+.suggestion-band .hint{color:var(--muted);font-size:11px}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:20}
+.nav-btn{flex:1;padding:10px 0 13px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:color .15s}
+.nav-btn.active{color:var(--accent)}
+.nav-icon{font-size:18px}.nav-label{font-size:10px;font-weight:500}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-height:92vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-handle{width:36px;height:3px;background:var(--border);border-radius:2px;margin:10px auto 6px}
+.modal-header{padding:4px 18px 14px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:700}
+.modal-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.modal-body{padding:14px 18px}
+.field-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.field-gap{height:14px}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 18px 18px}
+.btn{padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s}
+.btn:active{opacity:.7}
+.btn-cancel{background:var(--surface2);color:var(--muted)}
+.btn-save{background:var(--accent);color:#0d1117}
+.btn-suggest{width:100%;background:rgba(240,180,41,0.12);color:var(--accent);border:1px solid rgba(240,180,41,0.3);border-radius:var(--radius-sm);padding:9px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px}
+.btn-suggest:active{opacity:.7}
+
+.calc-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:14px}
+.calc-display{padding:10px 12px;min-height:58px;display:flex;flex-direction:column;justify-content:flex-end;gap:1px}
+.calc-expr{font-size:12px;color:var(--muted);min-height:16px;word-break:break-all}
+.calc-result{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.5px;min-height:30px}
+.calc-result.preview{color:var(--accent)}
+.calc-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+.k{background:var(--surface2);border:none;color:var(--text);font-size:17px;font-weight:500;padding:15px 0;cursor:pointer;transition:background .1s;font-family:inherit}
+.k:active{background:var(--surface3)}
+.k.op{color:var(--accent);font-size:18px}
+.k.fn{color:var(--muted);font-size:14px}
+.k.zero{grid-column:span 2}
+.k.ok{background:var(--accent);color:#0d1117;font-weight:700}
+
+.note-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:10px 12px;outline:none;min-height:70px;resize:none;font-family:inherit}
+.note-input:focus{border-color:var(--accent)}
+.note-text{font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;background:var(--surface2);border-radius:var(--radius-sm);padding:12px}
+
+.annual-view{padding:14px;display:none}
+.annual-view.active{display:block}
+.annual-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--radius-sm);margin-bottom:5px;background:var(--surface);border:1px solid var(--border);cursor:pointer}
+.annual-month{font-size:12px;font-weight:700;width:36px;color:var(--muted)}
+.annual-bar-wrap{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.annual-bar{height:100%;border-radius:3px}
+.bar-green{background:var(--green)}.bar-red{background:var(--red)}
+.annual-solde{font-size:13px;font-weight:700;min-width:80px;text-align:right}
+.annual-solde.green{color:var(--green)}.annual-solde.red{color:var(--red)}
+.annual-cumul{font-size:10px;color:var(--muted);min-width:65px;text-align:right}
+.recap-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+.recap-table th{text-align:right;color:var(--muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--border)}
+.recap-table th:first-child{text-align:left}
+.recap-table td{text-align:right;padding:5px 6px;border-bottom:1px solid var(--border)}
+.recap-table td:first-child{text-align:left;color:var(--muted)}
+.recap-table .pos{color:var(--green)}.recap-table .neg{color:var(--red)}
+.recap-table tr.total td{font-weight:700;color:var(--text);border-top:1px solid var(--border)}
+
+.main-view{display:block}.main-view.hidden{display:none}
+.splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:200}
+.splash.hidden{display:none}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.splash-title{font-size:18px;font-weight:700;color:var(--accent)}
+.splash-msg{font-size:13px;color:var(--muted)}
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 16px;font-size:12px;color:var(--text);z-index:300;opacity:0;transition:opacity .2s;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash">
+  <div class="spinner"></div>
+  <div class="splash-title">🎭 Trésorerie Chat Pitre</div>
+  <div class="splash-msg" id="splashMsg">Connexion à Google Sheets…</div>
+</div>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">🎭 Chat Pitre</div>
+    <div class="header-right">
+      <div class="sync-dot" id="syncDot"></div>
+      <div class="year-tabs">
+        <button class="year-tab active" id="tab2026" onclick="setYear(2026)">2026</button>
+        <button class="year-tab" id="tab2027" onclick="setYear(2027)">2027</button>
+      </div>
+    </div>
+  </div>
+  <div class="month-scroll" id="monthScroll"></div>
+</div>
+
+<div class="main-view" id="mainView">
+  <div class="cards-row" id="cardsRow"></div>
+  <div id="sections"></div>
+</div>
+
+<div class="annual-view" id="annualView">
+  <div id="annualContent"></div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" id="navMois" onclick="showView('mois')">
+    <div class="nav-icon">📅</div><div class="nav-label">Mois</div>
+  </button>
+  <button class="nav-btn" id="navAnnee" onclick="showView('annee')">
+    <div class="nav-icon">📊</div><div class="nav-label">Année</div>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL ÉDITION -->
+<div class="modal-overlay" id="editModal" onclick="closeModal('editModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="editTitle"></div>
+      <div class="modal-sub" id="editSub"></div>
+    </div>
+    <div class="modal-body">
+      <div id="suggestBox" style="display:none"></div>
+      <div class="field-label">Montant (€) — addition possible : ex. 144,73+244,73</div>
+      <div class="calc-wrap">
+        <div class="calc-display">
+          <div class="calc-expr" id="calcExpr"></div>
+          <div class="calc-result" id="calcResult">0</div>
+        </div>
+        <div class="calc-keys">
+          <button class="k fn" onclick="calcClear()">C</button>
+          <button class="k fn" onclick="calcDel()">⌫</button>
+          <button class="k fn" onclick="calcPercent()">%</button>
+          <button class="k op" onclick="calcKey('/')">÷</button>
+          <button class="k" onclick="calcKey('7')">7</button>
+          <button class="k" onclick="calcKey('8')">8</button>
+          <button class="k" onclick="calcKey('9')">9</button>
+          <button class="k op" onclick="calcKey('*')">×</button>
+          <button class="k" onclick="calcKey('4')">4</button>
+          <button class="k" onclick="calcKey('5')">5</button>
+          <button class="k" onclick="calcKey('6')">6</button>
+          <button class="k op" onclick="calcKey('-')">−</button>
+          <button class="k" onclick="calcKey('1')">1</button>
+          <button class="k" onclick="calcKey('2')">2</button>
+          <button class="k" onclick="calcKey('3')">3</button>
+          <button class="k op" onclick="calcKey('+')">+</button>
+          <button class="k zero" onclick="calcKey('0')">0</button>
+          <button class="k" onclick="calcKey('.')">.</button>
+          <button class="k ok" onclick="calcValidate()">OK</button>
+        </div>
+      </div>
+      <div class="field-label">Note (optionnelle)</div>
+      <textarea class="note-input" id="editNote" rows="3" placeholder="Détail…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal('editModal')">Annuler</button>
+      <button class="btn btn-save" onclick="saveEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTE -->
+<div class="modal-overlay" id="noteModal" onclick="closeModal('noteModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="noteMTitle"></div>
+      <div class="modal-sub" id="noteMSub"></div>
+    </div>
+    <div class="modal-body"><div class="note-text" id="noteMText"></div></div>
+    <div class="modal-actions" style="grid-template-columns:1fr">
+      <button class="btn btn-cancel" onclick="closeModal('noteModal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPBqyJCiUMRdf_FQ9o_ippji1sDO5EK3r_orfBoqSYAsWZqhEKvC7B7AQUM-ndGgTdUw/exec";
+
+const MONTHS       = ["jan","fev","mar","avr","mai","jun","jul","aou","sep","oct","nov","dec"];
+const MONTH_LABELS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
+const MONTH_FULL   = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+// Taux d'estimation des charges sur nets versés (constatés 2025)
+// Charges prélevées M+1 = environ 99% du net versé M
+const TAUX_CHARGES_SUR_NET = 0.99;
+
+function zeroM() { const o={}; MONTHS.forEach(m=>o[m]=0); return o; }
+function fixeM(v){ const o={}; MONTHS.forEach(m=>o[m]=v); return o; }
+function sparseM(vals){ const o=zeroM(); Object.assign(o,vals); return o; }
+
+// ── STRUCTURE DES DONNÉES ─────────────────────────────────────────────────────
+// Chaque ligne a :
+//   id, label, values{jan..dec}, notes{jan..dec}
+//   auto:true → montants pré-remplis modifiables
+//   isChargesSoc:true → suggestion calculée depuis salaires M-1
+//   isNet:true → salaire net (flux immédiat mois M)
+
+function buildDefaultYear(year) {
+  return {
+    year,
+    // ── ENCAISSEMENTS ──────────────────────────────────────────────────────
+    encaissements: [
+      {id:"inscr_pm",    label:"Inscriptions Pièces Montées",        values:zeroM(), notes:{}},
+      {id:"inscr_eveil", label:"Inscriptions Éveil / CREA",           values:zeroM(), notes:{}},
+      {id:"subv_mairie", label:"Subvention Mairie St-Denis-en-Val",   values:zeroM(), notes:{}},
+      {id:"subv_autres", label:"Autres subventions",                   values:zeroM(), notes:{}},
+      {id:"autres_enc",  label:"Autres recettes",                      values:zeroM(), notes:{}},
+    ],
+    // ── CHARGES FIXES (pré-remplies, toujours modifiables) ────────────────
+    charges_fixes: [
+      {id:"orange",     label:"Orange Téléphone",           auto:true, values:fixeM(9.99),  notes:{}},
+      {id:"maif",       label:"MAIF Assurances",            auto:true, values:sparseM({jan:368.99}), notes:{jan:"MAIF — prélèvement annuel"}},
+      {id:"apple",      label:"Apple iCloud",               auto:true, values:fixeM(2.99),  notes:{}},
+      {id:"ovh",        label:"OVH Site Web",               auto:true, values:sparseM({jan:47.38,jun:33.60}), notes:{jan:"OVH annuel",jun:"OVH semestriel"}},
+      {id:"ghs",        label:"GHS Logiciel Paie",          auto:true, values:sparseM({mai:616.46}), notes:{mai:"Abonnement annuel GHS"}},
+      {id:"eweka",      label:"EWEKA Stockage",             auto:true, values:sparseM({mar:89.85}), notes:{mar:"Abonnement annuel EWEKA"}},
+      {id:"nzb",        label:"NZB Logiciel",               auto:true, values:sparseM({mar:20.00}), notes:{}},
+      {id:"vimeo",      label:"VIMEO",                      auto:true, values:sparseM({jun:108.00}), notes:{jun:"Abonnement annuel VIMEO"}},
+      {id:"yamm",       label:"YAMM PubliPost",             auto:false, values:zeroM(), notes:{}},
+      {id:"frais_bq",   label:"Frais bancaires CA",         auto:true, values:sparseM({nov:55.00}), notes:{nov:"Frais bancaires annuels CA"}},
+      {id:"autres_fix", label:"Autres charges fixes",       auto:false, values:zeroM(), notes:{}},
+    ],
+    // ── SALAIRES NETS (flux mois M — ce qui sort du compte) ───────────────
+    salaires_nets: [
+      {id:"net_franck",   label:"Net versé — Franck",    isNet:true, values:zeroM(), notes:{}},
+      {id:"net_charline", label:"Net versé — Charline",  isNet:true, values:zeroM(), notes:{}},
+      {id:"net_clelie",   label:"Net versé — Clélie",    isNet:true, values:zeroM(), notes:{}},
+      {id:"net_autres",   label:"Net versé — Autres",    isNet:true, values:zeroM(), notes:{}},
+    ],
+    // ── CHARGES SOCIALES (flux mois M+1 — pré-calculées, TOUJOURS modifiables) ──
+    charges_sociales: [
+      {id:"urssaf",      label:"URSSAF",                    isChargesSoc:true, taux:0.33, values:zeroM(), notes:{}},
+      {id:"audiens",     label:"Audiens Retraite + CS",     isChargesSoc:true, taux:0.38, values:zeroM(), notes:{}},
+      {id:"ft",          label:"France Travail",            isChargesSoc:true, taux:0.14, values:zeroM(), notes:{}},
+      {id:"audiens_comp",label:"Audiens PREV + FCAP + FNAS",isChargesSoc:true, taux:0.04, values:zeroM(), notes:{}},
+      {id:"pas",         label:"Prélèvement à la source",   isChargesSoc:true, taux:0.04, values:zeroM(), notes:{}},
+      {id:"afdas",       label:"AFDAS (annuel — mars)",     auto:true, values:sparseM({mar:71.36}), notes:{mar:"AFDAS formation — annuel"}},
+      {id:"thalies",     label:"Thalies Médecine travail",  auto:true, values:sparseM({mar:60.00}), notes:{mar:"Médecine du travail — annuel"}},
+      {id:"charges_sup", label:"Autres charges sociales",   auto:false, values:zeroM(), notes:{}},
+    ],
+    // ── AUTRES DÉPENSES ────────────────────────────────────────────────────
+    autres: [
+      {id:"fournit",   label:"Fournitures & matériel pédagogique", values:zeroM(), notes:{}},
+      {id:"communic",  label:"Communication / impression tracts",   values:zeroM(), notes:{}},
+      {id:"depla",     label:"Déplacements & restauration",         values:zeroM(), notes:{}},
+      {id:"presta",    label:"Prestations extérieures",             values:zeroM(), notes:{}},
+      {id:"doc",       label:"Documentation / presse",              values:zeroM(), notes:{}},
+      {id:"dons_div",  label:"Dons & divers",                       values:zeroM(), notes:{}},
+      {id:"autres_dep",label:"Autres dépenses",                     values:zeroM(), notes:{}},
+    ],
+    // ── ÉPARGNE ───────────────────────────────────────────────────────────
+    epargne: [
+      {id:"livret", label:"Virement Livret (épargne)", values:zeroM(), notes:{}},
+    ]
+  };
+}
+
+// ── ÉTAT ──────────────────────────────────────────────────────────────────────
+let appData     = { 2026: buildDefaultYear(2026), 2027: buildDefaultYear(2027) };
+let currentYear = 2026;
+let currentMonth= MONTHS[new Date().getMonth()] || "jan";
+let currentView = "mois";
+let editingCtx  = null;
+let isSaving    = false;
+let sOpen = {enc:true, fix:true, sal:true, soc:true, aut:true, epa:true};
+
+// ── SUGGESTION CHARGES M+1 ────────────────────────────────────────────────────
+// Total nets du mois M → suggestion charges réparties sur M+1
+function getTotalNetsForMonth(year, m) {
+  return appData[year].salaires_nets.reduce((s,r) => s+(r.values[m]||0), 0);
+}
+
+function getSuggestedChargesM1(year, m) {
+  // Les charges du mois M sont basées sur les nets versés en M-1
+  const mIdx = MONTHS.indexOf(m);
+  if (mIdx === 0) return 0; // janvier : charges de décembre N-1 (non calculées ici)
+  const mPrev = MONTHS[mIdx - 1];
+  const netsPrev = getTotalNetsForMonth(year, mPrev);
+  return Math.round(netsPrev * TAUX_CHARGES_SUR_NET * 100) / 100;
+}
+
+function getSuggestedByTaux(year, m, taux) {
+  const mIdx = MONTHS.indexOf(m);
+  if (mIdx === 0) return 0;
+  const mPrev = MONTHS[mIdx - 1];
+  const netsPrev = getTotalNetsForMonth(year, mPrev);
+  return Math.round(netsPrev * taux * 100) / 100;
+}
+
+// ── SYNCHRO ───────────────────────────────────────────────────────────────────
+function setSyncState(s) { document.getElementById('syncDot').className='sync-dot '+s; }
+
+async function loadFromSheets() {
+  try {
+    setSyncState('loading');
+    const res  = await fetch(SCRIPT_URL+"?app=cp&t="+Date.now());
+    const text = await res.text();
+    if (text && text !== '{}' && text.trim()) {
+      const parsed = JSON.parse(text);
+      const key2026 = parsed[2026] || parsed["2026"];
+      const key2027 = parsed[2027] || parsed["2027"];
+      if (key2026 || key2027) {
+        [2026,2027].forEach(y => {
+          const saved = parsed[y] || parsed[String(y)];
+          if (!saved) return;
+          const def = buildDefaultYear(y);
+          const cats = ['encaissements','charges_fixes','salaires_nets','charges_sociales','autres','epargne'];
+          cats.forEach(cat => {
+            if (!saved[cat]) return;
+            saved[cat].forEach(savedRow => {
+              const defRow = def[cat] ? def[cat].find(r=>r.id===savedRow.id) : null;
+              if (defRow) {
+                defRow.values = savedRow.values || defRow.values;
+                defRow.notes  = savedRow.notes  || defRow.notes;
+              }
+            });
+          });
+          appData[y] = def;
+        });
+      }
+    }
+    setSyncState('ok');
+  } catch(e) { setSyncState('err'); showToast('Hors-ligne — données locales'); }
+}
+
+async function saveToSheets() {
+  if (isSaving) return;
+  isSaving=true; setSyncState('loading');
+  const toSave={};
+  [2026,2027].forEach(y => {
+    toSave[y]={};
+    const yd=appData[y];
+    ['encaissements','charges_fixes','salaires_nets','charges_sociales','autres','epargne'].forEach(cat=>{
+      toSave[y][cat]=yd[cat].map(r=>({id:r.id,values:{...r.values},notes:{...r.notes}}));
+    });
+  });
+  try {
+    await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(toSave),headers:{'Content-Type':'text/plain'}});
+    setSyncState('ok'); showToast('Sauvegardé ✓');
+  } catch(e){ setSyncState('err'); showToast('Erreur — réessaie'); }
+  isSaving=false;
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── FORMATAGE ─────────────────────────────────────────────────────────────────
+function fmt(v){
+  if(!v||v===0) return "0 €";
+  return v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f')+" €";
+}
+function fmtSign(v){
+  const s=Math.abs(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f');
+  return (v>=0?"+":"−")+s+" €";
+}
+
+// ── CALCULS ───────────────────────────────────────────────────────────────────
+function yd() { return appData[currentYear]; }
+
+function getMonthTotals(m, year) {
+  const d = appData[year||currentYear];
+  const enc = d.encaissements.reduce((s,r)=>s+(r.values[m]||0),0);
+  const fix = d.charges_fixes.reduce((s,r)=>s+(r.values[m]||0),0);
+  const sal = d.salaires_nets.reduce((s,r)=>s+(r.values[m]||0),0);
+  const soc = d.charges_sociales.reduce((s,r)=>s+(r.values[m]||0),0);
+  const aut = d.autres.reduce((s,r)=>s+(r.values[m]||0),0);
+  const epa = d.epargne.reduce((s,r)=>s+(r.values[m]||0),0);
+  return { enc, fix, sal, soc, aut, epa, dec:fix+sal+soc+aut+epa, solde:enc-(fix+sal+soc+aut+epa) };
+}
+
+function getSoldeDepart(m) {
+  let c=0;
+  for(let i=0;i<MONTHS.indexOf(m);i++) c+=getMonthTotals(MONTHS[i]).solde;
+  return c;
+}
+
+// ── RENDU MOIS ────────────────────────────────────────────────────────────────
+function renderMonths(){
+  const el=document.getElementById('monthScroll'); el.innerHTML='';
+  MONTHS.forEach((m,i)=>{
+    const {enc,solde}=getMonthTotals(m);
+    const btn=document.createElement('button');
+    btn.className='month-btn'+(m===currentMonth?' active':'')
+      +(m!==currentMonth&&enc>0&&solde>0?' positive':'')
+      +(m!==currentMonth&&solde<0?' negative':'');
+    btn.textContent=MONTH_LABELS[i];
+    btn.onclick=()=>{currentMonth=m;render();};
+    el.appendChild(btn);
+  });
+  setTimeout(()=>{const a=el.querySelector('.active');if(a)a.scrollIntoView({inline:'center',behavior:'smooth'});},50);
+}
+
+function renderCards(){
+  const m=currentMonth;
+  const {enc,dec,solde}=getMonthTotals(m);
+  const dep=getSoldeDepart(m); const cumul=dep+solde;
+  document.getElementById('cardsRow').innerHTML=`
+    <div class="card"><div class="card-label">Encaissements</div><div class="card-value green">${fmt(enc)}</div></div>
+    <div class="card"><div class="card-label">Décaissements</div><div class="card-value red">${fmt(dec)}</div></div>
+    <div class="card full">
+      <div class="card-label">Solde du mois</div>
+      <div class="card-value ${solde>=0?'green':'red'}">${fmtSign(solde)}</div>
+      ${dep!==0?`<div class="card-sub">Report : ${fmt(dep)} → Cumulé : ${fmt(cumul)}</div>`:''}
+    </div>`;
+}
+
+const SECT = [
+  {key:'enc', cat:'encaissements',   label:'Encaissements',        dot:'#3fb950', color:'var(--green)'},
+  {key:'fix', cat:'charges_fixes',   label:'Charges fixes',        dot:'#58a6ff', color:'var(--blue)'},
+  {key:'sal', cat:'salaires_nets',   label:'Salaires nets versés', dot:'#f0b429', color:'var(--accent)'},
+  {key:'soc', cat:'charges_sociales',label:'Charges sociales',     dot:'#bc8cff', color:'var(--purple)'},
+  {key:'aut', cat:'autres',          label:'Autres dépenses',      dot:'#f85149', color:'var(--red)'},
+  {key:'epa', cat:'epargne',         label:'Épargne (livret)',      dot:'#7d8590', color:'var(--muted)'},
+];
+
+function renderSections(){
+  const m=currentMonth; const d=yd();
+  const mIdx=MONTHS.indexOf(m);
+  const mPrev=mIdx>0?MONTHS[mIdx-1]:null;
+  const netsPrev=mPrev?getTotalNetsForMonth(currentYear,mPrev):0;
+
+  let html='';
+  SECT.forEach(({key,cat,label,dot,color})=>{
+    const rows=d[cat];
+    const total=rows.reduce((s,r)=>s+(r.values[m]||0),0);
+    const isOpen=sOpen[key];
+
+    let rowsHtml='';
+
+    // Note contextuelle section salaires
+    if(key==='sal'){
+      rowsHtml+=`<div class="section-note">Saisis les montants nets virés — les charges sociales se pré-rempliront en ${mIdx<11?MONTH_FULL[mIdx+1]:'Janvier N+1'} (modifiables au centime)</div>`;
+    }
+
+    // Bandeau suggestion charges sociales
+    if(key==='soc' && netsPrev>0){
+      const suggested=Math.round(netsPrev*TAUX_CHARGES_SUR_NET*100)/100;
+      rowsHtml+=`<div class="suggestion-band">
+        <strong>Estimation basée sur les nets de ${MONTH_FULL[mIdx-1]} (${fmt(netsPrev)})</strong>
+        Charges totales estimées : ${fmt(suggested)}<br>
+        <span class="hint">Chaque ligne est pré-remplie et modifiable au centime près ✏️</span>
+      </div>`;
+    }
+
+    rows.forEach(row=>{
+      const v=row.values[m]||0;
+      const note=row.notes&&row.notes[m]?row.notes[m]:'';
+
+      // Calcul suggestion pour charges sociales
+      let suggStr='';
+      if(row.isChargesSoc && netsPrev>0){
+        const sugg=getSuggestedByTaux(currentYear,m,row.taux);
+        suggStr=`<div class="row-tag tag-auto">Estimation M-1 : ${fmt(sugg)}</div>`;
+      }
+
+      const tagFixed=row.auto?`<div class="row-tag tag-fixed">Fixe — modifiable</div>`:'';
+      const tagEditable=row.isChargesSoc?`<div class="row-tag tag-editable">Modifiable au centime</div>`:'';
+
+      rowsHtml+=`<div class="row">
+        <div class="row-left">
+          <div class="row-label${v===0&&!row.isChargesSoc?' muted':''}">${row.label}</div>
+          ${tagFixed}${suggStr||tagEditable}
+        </div>
+        <div class="row-right">
+          ${note?`<div class="has-note" onclick="showNote('${key}','${row.id}','${m}','${esc(row.label)}')"><span>i</span></div>`:''}
+          <div class="row-amount${v===0?' zero':''}${row.isChargesSoc&&v===0?' suggested':''}">${v===0&&row.isChargesSoc?'à saisir':v===0?'—':fmt(v)}</div>
+          <button class="edit-btn" onclick="openEdit('${key}','${row.id}','${m}')">✏️</button>
+        </div>
+      </div>`;
+    });
+
+    html+=`<div class="section">
+      <div class="section-header" onclick="toggleSection('${key}')">
+        <div class="section-title"><div class="section-dot" style="background:${dot}"></div>${label}</div>
+        <div style="display:flex;align-items:center">
+          <div class="section-total" style="color:${color}">${fmt(total)}</div>
+          <div class="chevron ${isOpen?'open':''}">▾</div>
+        </div>
+      </div>
+      <div class="rows-container" style="display:${isOpen?'block':'none'}">${rowsHtml}</div>
+    </div>`;
+  });
+
+  document.getElementById('sections').innerHTML=html;
+}
+
+function esc(s){return s.replace(/'/g,"\\'")}
+function toggleSection(k){sOpen[k]=!sOpen[k];renderSections();}
+
+// ── CALCULATRICE ──────────────────────────────────────────────────────────────
+let calcExpr='', calcFinal=false;
+function calcEval(e){
+  try{if(!/^[\d+\-*/.() ]+$/.test(e))return NaN;const r=Function('"use strict";return('+e+')')();if(!isFinite(r))return NaN;return Math.round(r*100)/100;}
+  catch(x){return NaN;}
+}
+function calcUpdateDisplay(){
+  const eEl=document.getElementById('calcExpr'),rEl=document.getElementById('calcResult');
+  eEl.textContent=calcExpr;
+  if(!calcExpr){rEl.textContent='0';rEl.className='calc-result';return;}
+  const v=calcEval(calcExpr);
+  if(!isNaN(v)){rEl.textContent=fmt(v);rEl.className='calc-result'+(calcFinal?'':' preview');}
+  else{rEl.textContent=calcExpr;rEl.className='calc-result';}
+}
+function calcKey(k){
+  calcFinal=false;
+  const ops=['+','-','*','/'];
+  const last=calcExpr.slice(-1);
+  if(ops.includes(k)&&ops.includes(last))calcExpr=calcExpr.slice(0,-1)+k;
+  else if(k==='.'&&/\.\d*$/.test(calcExpr.split(/[+\-*/]/).pop()))return;
+  else calcExpr+=k;
+  calcUpdateDisplay();
+}
+function calcClear(){calcExpr='';calcFinal=false;calcUpdateDisplay();}
+function calcDel(){calcExpr=calcExpr.slice(0,-1);calcFinal=false;calcUpdateDisplay();}
+function calcPercent(){const v=calcEval(calcExpr);if(!isNaN(v)){calcExpr=String(v/100);calcFinal=true;calcUpdateDisplay();}}
+function calcValidate(){const v=calcEval(calcExpr);if(!isNaN(v)){calcExpr=String(v);calcFinal=true;calcUpdateDisplay();}}
+function calcGetValue(){const v=calcEval(calcExpr);return isNaN(v)?0:v;}
+function calcSetInitial(v){calcExpr=v>0?String(v):'';calcFinal=false;calcUpdateDisplay();}
+
+// ── ÉDITION ───────────────────────────────────────────────────────────────────
+function openEdit(key, id, m) {
+  const sect=SECT.find(s=>s.key===key);
+  const rows=yd()[sect.cat];
+  const row=rows.find(r=>r.id===id);
+  if(!row) return;
+  editingCtx={key,id,m};
+
+  document.getElementById('editTitle').textContent=row.label;
+  document.getElementById('editSub').textContent=MONTH_FULL[MONTHS.indexOf(m)]+' '+currentYear;
+  document.getElementById('editNote').value=(row.notes&&row.notes[m])||'';
+  calcSetInitial(row.values[m]||0);
+
+  // Bandeau suggestion si charges sociales
+  const sBox=document.getElementById('suggestBox');
+  if(row.isChargesSoc){
+    const mIdx=MONTHS.indexOf(m);
+    const mPrev=mIdx>0?MONTHS[mIdx-1]:null;
+    const netsPrev=mPrev?getTotalNetsForMonth(currentYear,mPrev):0;
+    if(netsPrev>0 && mPrev){
+      const sugg=getSuggestedByTaux(currentYear,m,row.taux);
+      sBox.style.display='block';
+      sBox.innerHTML=`<div class="suggestion-band" style="margin-bottom:12px">
+        <strong>Estimation basée sur les nets de ${MONTH_FULL[mIdx-1]} (${fmt(netsPrev)})</strong>
+        Suggestion : <strong>${fmt(sugg)}</strong> (taux ${Math.round(row.taux*100)}%)<br>
+        <span class="hint">Modifie le montant au centime près avec la calculatrice</span>
+        <br><button class="btn-suggest" onclick="applySuggestion(${sugg})" style="margin-top:8px">Utiliser ${fmt(sugg)}</button>
+      </div>`;
+    } else {
+      sBox.style.display='none';
+    }
+  } else {
+    sBox.style.display='none';
+  }
+
+  openModal('editModal');
+}
+
+function applySuggestion(v){
+  calcExpr=String(v); calcFinal=true; calcUpdateDisplay();
+}
+
+function saveEdit(){
+  if(!editingCtx)return;
+  const {key,id,m}=editingCtx;
+  const rows=yd()[SECT.find(s=>s.key===key).cat];
+  const row=rows.find(r=>r.id===id);
+  if(!row)return;
+  const val=calcGetValue();
+  const note=document.getElementById('editNote').value.trim();
+  row.values[m]=val;
+  if(!row.notes)row.notes={};
+  if(note)row.notes[m]=note; else delete row.notes[m];
+  closeModal('editModal');
+  render();
+  saveToSheets();
+}
+
+function showNote(key,id,m,label){
+  const rows=yd()[SECT.find(s=>s.key===key).cat];
+  const row=rows.find(r=>r.id===id);
+  if(!row||!row.notes||!row.notes[m])return;
+  document.getElementById('noteMTitle').textContent=label;
+  document.getElementById('noteMSub').textContent=MONTH_FULL[MONTHS.indexOf(m)]+' '+currentYear;
+  document.getElementById('noteMText').textContent=row.notes[m];
+  openModal('noteModal');
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── VUE ANNUELLE ──────────────────────────────────────────────────────────────
+function renderAnnual(){
+  const maxAbs=Math.max(...MONTHS.map(m=>Math.abs(getMonthTotals(m).solde)),1);
+  let cumul=0, rows='', totalEnc=0, totalDec=0;
+  MONTHS.forEach((m,i)=>{
+    const {enc,dec,solde}=getMonthTotals(m);
+    cumul+=solde; totalEnc+=enc; totalDec+=dec;
+    if(enc===0&&dec===0){
+      rows+=`<div class="annual-row" onclick="selectMonth('${m}')">
+        <div class="annual-month">${MONTH_LABELS[i]}</div>
+        <div style="flex:1;font-size:11px;color:var(--muted)">— aucune donnée</div>
+      </div>`;return;
+    }
+    const pct=Math.abs(solde)/maxAbs*100,isPos=solde>=0;
+    rows+=`<div class="annual-row" onclick="selectMonth('${m}')">
+      <div class="annual-month">${MONTH_LABELS[i]}</div>
+      <div class="annual-bar-wrap"><div class="annual-bar ${isPos?'bar-green':'bar-red'}" style="width:${pct}%"></div></div>
+      <div class="annual-solde ${isPos?'green':'red'}">${fmtSign(solde)}</div>
+      <div class="annual-cumul">${fmt(cumul)}</div>
+    </div>`;
+  });
+
+  const d=yd();
+  const catTotals=[
+    {label:'Encaissements',   total:d.encaissements.reduce((s,r)=>s+MONTHS.reduce((ss,m)=>ss+(r.values[m]||0),0),0),   color:'var(--green)'},
+    {label:'Charges fixes',   total:d.charges_fixes.reduce((s,r)=>s+MONTHS.reduce((ss,m)=>ss+(r.values[m]||0),0),0),   color:'var(--blue)'},
+    {label:'Salaires nets',   total:d.salaires_nets.reduce((s,r)=>s+MONTHS.reduce((ss,m)=>ss+(r.values[m]||0),0),0),    color:'var(--accent)'},
+    {label:'Charges sociales',total:d.charges_sociales.reduce((s,r)=>s+MONTHS.reduce((ss,m)=>ss+(r.values[m]||0),0),0),color:'var(--purple)'},
+    {label:'Autres dépenses', total:d.autres.reduce((s,r)=>s+MONTHS.reduce((ss,m)=>ss+(r.values[m]||0),0),0),           color:'var(--red)'},
+    {label:'Épargne livret',  total:d.epargne.reduce((s,r)=>s+MONTHS.reduce((ss,m)=>ss+(r.values[m]||0),0),0),          color:'var(--muted)'},
+  ];
+  const soldeAnnuel=totalEnc-totalDec;
+
+  document.getElementById('annualContent').innerHTML=`
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Synthèse ${currentYear}</div>
+    ${rows}
+    <div style="margin-top:16px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Récapitulatif annuel</div>
+    <table class="recap-table">
+      <tr><th>Catégorie</th><th>Total</th></tr>
+      ${catTotals.map(c=>`<tr><td>${c.label}</td><td style="color:${c.color}">${fmt(c.total)}</td></tr>`).join('')}
+      <tr class="total"><td>RÉSULTAT NET</td><td class="${soldeAnnuel>=0?'pos':'neg'}">${fmtSign(soldeAnnuel)}</td></tr>
+    </table>`;
+}
+
+function selectMonth(m){currentMonth=m;showView('mois');}
+
+function setYear(y){
+  currentYear=y;
+  document.getElementById('tab2026').className='year-tab'+(y===2026?' active':'');
+  document.getElementById('tab2027').className='year-tab'+(y===2027?' active':'');
+  render();
+}
+
+function showView(v){
+  currentView=v;
+  document.getElementById('mainView').className=v==='mois'?'main-view':'main-view hidden';
+  document.getElementById('annualView').className=v==='annee'?'annual-view active':'annual-view';
+  document.getElementById('navMois').className=v==='mois'?'nav-btn active':'nav-btn';
+  document.getElementById('navAnnee').className=v==='annee'?'nav-btn active':'nav-btn';
+  if(v==='annee')renderAnnual(); else render();
+}
+
+function render(){renderMonths();renderCards();renderSections();}
+
+(async function init(){
+  await loadFromSheets();
+  document.getElementById('splash').classList.add('hidden');
+  render();
+})();
+</script>
+</body>
+</html>
