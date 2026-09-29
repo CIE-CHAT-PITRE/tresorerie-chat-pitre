@@ -211,6 +211,13 @@ async function render() {
     currentAppel = await apiGet({action:'appel', groupe, date});
   } catch(e) { currentAppel = {}; }
 
+  renderList();
+}
+
+// Redessine la liste à partir de l'état LOCAL (currentAppel), sans requête réseau.
+// Utilisé après chaque clic, pour ne jamais écraser un changement pas encore confirmé par le serveur.
+function renderList() {
+  const groupe = groupSelect.value;
   const eleves = ROSTER.filter(s => s.groupe === groupe);
   listEl.innerHTML = '';
   let present = 0, absent = 0;
@@ -269,14 +276,14 @@ listEl.addEventListener('click', (e) => {
   if (!btn) return;
   const k = btn.dataset.key;
   currentAppel[k] = currentAppel[k] === 'Présent' ? 'Absent' : 'Présent';
-  render();
+  renderList();
   scheduleSave();
 });
 
 document.getElementById('btnAllPresent').addEventListener('click', () => {
   const groupe = groupSelect.value;
   ROSTER.filter(s => s.groupe===groupe).forEach(el => currentAppel[key(el.prenom,el.nom)] = 'Présent');
-  render(); scheduleSave();
+  renderList(); scheduleSave();
   showToast('Tout le monde marqué présent');
 });
 
@@ -284,7 +291,7 @@ document.getElementById('btnReset').addEventListener('click', () => {
   if (!confirm('Réinitialiser l\'appel de cette séance ? Tout le monde repassera à "présent".')) return;
   const groupe = groupSelect.value;
   ROSTER.filter(s => s.groupe===groupe).forEach(el => currentAppel[key(el.prenom,el.nom)] = 'Présent');
-  render(); scheduleSave();
+  renderList(); scheduleSave();
   showToast('Appel réinitialisé');
 });
 
